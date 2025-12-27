@@ -30,7 +30,7 @@ Clone the repository:
 
 Bash
 
-git clone https://github.com/your-username/kasparro.git
+git clone https://github.com/G-sham/kasparro.git
 Install dependencies:
 
 Bash
