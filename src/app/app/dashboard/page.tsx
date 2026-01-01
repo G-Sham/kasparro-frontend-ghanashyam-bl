@@ -1,12 +1,11 @@
 "use client";
 
-import { useBrand } from "@/context/brand-provider";
+import { useAppStore } from "@/lib/store";
+import { BRANDS, DASHBOARD_STATS } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Activity, ShieldCheck, Target, Clock } from "lucide-react";
-import { useEffect, useState } from "react";
 
-function SnapshotCard({ title, value, icon: Icon, isLoading, unit = '' }: { title: string; value: string | number; icon: React.ElementType; isLoading: boolean; unit?: string }) {
+function SnapshotCard({ title, value, icon: Icon, unit = '' }: { title: string; value: string | number; icon: React.ElementType; unit?: string }) {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -14,68 +13,49 @@ function SnapshotCard({ title, value, icon: Icon, isLoading, unit = '' }: { titl
                 <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                {isLoading ? (
-                    <Skeleton className="h-8 w-1/2" />
-                ) : (
-                    <div className="text-2xl font-bold">{value}{unit}</div>
-                )}
+                <div className="text-2xl font-bold">{value}{unit}</div>
             </CardContent>
         </Card>
     );
 }
 
 export default function DashboardPage() {
-    const { selectedBrand, brandData, isLoading } = useBrand();
-    const [lastAuditTime, setLastAuditTime] = useState('');
-
-    useEffect(() => {
-        if (!isLoading && brandData?.lastAudit) {
-            import('date-fns').then(({ formatDistanceToNow }) => {
-                setLastAuditTime(formatDistanceToNow(new Date(brandData.lastAudit), { addSuffix: true }));
-            });
-        }
-    }, [isLoading, brandData]);
+    // 1. Get the selected brand ID from our global store
+    const { selectedBrandId } = useAppStore();
     
+    // 2. Find the actual brand name (fallback to first brand if not found)
+    const currentBrand = BRANDS.find(b => b.id === selectedBrandId) || BRANDS[0];
+
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold tracking-tight">
-                {isLoading || !selectedBrand ? <Skeleton className="h-9 w-64" /> : `${selectedBrand.name} Snapshot`}
+                {currentBrand.name} Snapshot
             </h1>
+            
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <SnapshotCard
                     title="AI Visibility Score"
-                    value={brandData?.aiVisibility ?? 0}
+                    value={DASHBOARD_STATS.aiVisibility}
                     icon={Activity}
-                    isLoading={isLoading}
                     unit="%"
                 />
                 <SnapshotCard
-                    title="Trust / EEAT Score"
-                    value={brandData?.trustScore ?? 0}
+                    title="Trust / E-E-A-T Score"
+                    value={DASHBOARD_STATS.trustScore}
                     icon={ShieldCheck}
-                    isLoading={isLoading}
+                    unit="/100"
+                />
+                <SnapshotCard
+                    title="Keyword Coverage"
+                    value={DASHBOARD_STATS.keywordCoverage}
+                    icon={Target}
                     unit="%"
                 />
                 <SnapshotCard
-                    title="Non-Branded Keyword Coverage"
-                    value={brandData?.keywordCoverage ?? 0}
-                    icon={Target}
-                    isLoading={isLoading}
-                    unit="%"
+                    title="Last Audit"
+                    value="2h ago"
+                    icon={Clock}
                 />
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Last Audit</CardTitle>
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <Skeleton className="h-8 w-3/4" />
-                        ) : (
-                            <div className="text-2xl font-bold">{lastAuditTime}</div>
-                        )}
-                    </CardContent>
-                </Card>
             </div>
             
             <Card>
@@ -83,7 +63,9 @@ export default function DashboardPage() {
                 <CardTitle>Welcome to your Dashboard</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">This is a high-level overview of your brand's performance in the AI search landscape. Use the navigation on the left to dive deeper into specific audit modules or explore the system architecture.</p>
+                <p className="text-muted-foreground">
+                    This is a high-level overview of <span className="font-semibold text-slate-900 dark:text-white">{currentBrand.name}&apos;s</span> performance in the AI search landscape. Use the navigation on the left to dive deeper into specific audit modules or explore the system architecture.
+                </p>
               </CardContent>
             </Card>
         </div>
